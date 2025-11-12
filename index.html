@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>MX$ — Calculadora de Aposta Única</title>
+<style>
+  :root { font-family: Inter, Segoe UI, Helvetica, Arial, sans-serif }
+  body { background: #f6f7fb; color: #111; margin: 0; padding: 20px }
+  h1 { text-align: center; font-size: 2em; margin-bottom: 1em }
+  input, button { padding: 8px; margin: 5px; font-size: 1em }
+  label { display: block; margin-top: 10px }
+  #resultado, #historico { background: white; border-radius: 10px; padding: 15px; margin-top: 20px; box-shadow: 0 2px 6px rgba(0,0,0,.1) }
+  button { background: #0066ff; color: white; border: none; border-radius: 8px; cursor: pointer }
+  button:hover { background: #0049c6 }
+</style>
+</head>
+<body>
+<h1>MX$ — Calculadora de Aposta Única</h1>
+
+<label>Saldo inicial:</label>
+<input type="number" id="saldoInicial" placeholder="Ex: 1000" />
+
+<label>Saldo atual:</label>
+<input type="text" id="saldoAtual" readonly />
+
+<label>Odd:</label>
+<input type="number" id="odd1" step="0.01" placeholder="Ex: 1.57" />
+
+<label>Valor total a apostar:</label>
+<input type="number" id="valorTotal" placeholder="Ex: 100" />
+
+<label><input type="checkbox" id="modoUnico" checked /> Usar aposta única</label>
+
+<button onclick="calcularAposta()">Calcular</button>
+
+<div id="resultado"></div>
+
+<hr>
+
+<h2>Gerenciar apostas</h2>
+<label>Quantas apostas perdeu antes desta:</label>
+<input type="number" id="perdas" min="0" value="0" />
+
+<button onclick="apostaConcluida(true)">Registrar vitória</button>
+<button onclick="apostaConcluida(false)">Registrar derrota</button>
+
+<div id="historico"></div>
+
+<script>
+let saldo = 0;
+let history = [];
+const mults = { p2: 2.2, p1: 1.8, v2: 1.3 };
+
+document.getElementById("saldoInicial").addEventListener("input", e => {
+  saldo = parseFloat(e.target.value) || 0;
+  atualizarSaldo();
+});
+
+function atualizarSaldo() {
+  document.getElementById("saldoAtual").value = saldo.toFixed(2);
+}
+
+function calcularAposta() {
+  const odd1 = parseFloat(document.getElementById("odd1").value);
+  const valorTotal = parseFloat(document.getElementById("valorTotal").value);
+  const modoUnico = document.getElementById("modoUnico").checked;
+
+  if (!valorTotal || (!odd1 && modoUnico)) {
+    alert("Por favor, insira o valor total e a odd.");
+    return;
+  }
+
+  let lucroEsperado = 0, retorno = 0;
+  if (modoUnico) {
+    retorno = valorTotal * odd1;
+    lucroEsperado = retorno - valorTotal;
+  }
+
+  document.getElementById("resultado").innerHTML = `
+    <h3>Resumo da Aposta</h3>
+    <p><strong>Odd:</strong> ${odd1}</p>
+    <p><strong>Valor Apostado:</strong> R$ ${valorTotal.toFixed(2)}</p>
+    <p><strong>Lucro Potencial:</strong> R$ ${lucroEsperado.toFixed(2)}</p>
+    <p><strong>Retorno Total:</strong> R$ ${retorno.toFixed(2)}</p>
+  `;
+}
+
+function apostaConcluida(vitoria) {
+  const odd1 = parseFloat(document.getElementById("odd1").value);
+  const valor = parseFloat(document.getElementById("valorTotal").value);
+  if (!valor || !odd1) return alert("Informe odd e valor antes de registrar.");
+
+  const resultado = vitoria ? (odd1 * valor - valor) : -valor;
+  saldo += resultado;
+
+  history.push({ valor, odd: odd1, resultado });
+  atualizarSaldo();
+
+  let proximaAposta = valor;
+  if (history.length >= 2) {
+    const ultima = history[history.length - 1];
+    const penultima = history[history.length - 2];
+
+    if (ultima.resultado > 0 && penultima.resultado < 0) {
+      let ultimaVencedora = [...history].slice(0, history.length - 1).reverse().find(h => h.resultado > 0);
+      if (!ultimaVencedora) ultimaVencedora = history[0];
+      proximaAposta = ultimaVencedora.valor;
+    }
+  }
+
+  const perdas = parseInt(document.getElementById("perdas").value) || 0;
+  if (perdas >= 2) proximaAposta *= mults.p2;
+  else if (perdas === 1) proximaAposta *= mults.p1;
+  else proximaAposta *= mults.v2;
+
+  document.getElementById("historico").innerHTML = `
+    <h3>Histórico de Apostas</h3>
+    ${history.map((h, i) => `
+      <p>#${i + 1} — Odd ${h.odd} | Valor R$${h.valor.toFixed(2)} | Resultado: ${h.resultado > 0 ? 'Vitória' : 'Derrota'} (${h.resultado.toFixed(2)})</p>
+    `).join("")}
+    <p><strong>Próxima aposta sugerida:</strong> R$ ${proximaAposta.toFixed(2)}</p>
+  `;
+}
+</script>
+</body>
+</html>
