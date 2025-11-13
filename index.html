@@ -18,7 +18,8 @@
   .col{flex:1;min-width:140px}  
   .small{width:140px}  
   .btn{background:#0b66a3;color:#fff;padding:10px 14px;border-radius:8px;border:0;cursor:pointer;font-weight:600}  
-  .btn.secondary{background:#e6eef7;color:#0b3b66}  
+  .btn.secondary{background:#28a745;color:#fff}  /* Verde para "Aposta concluída" */
+  .btn.secondary:hover{background:#218838}  
   .btn.danger{background:#e24b4b}  
   .output{background:#f3f6fb;padding:12px;border-radius:8px;border:1px solid #e8edf6}  
   .summary{display:flex;gap:12px;flex-wrap:wrap;margin-top:8px}  
@@ -63,7 +64,6 @@
     <div class="col small"><label>Odd 1</label><input id="oddA" type="number" step="0.01" min="1"/></div>  
     <div class="col small"><label>Odd 2</label><input id="oddB" type="number" step="0.01" min="1"/></div>  
     <div class="col small"><label>Valor total a apostar (R$)</label><input id="valorTotal" type="number" step="0.01" min="0" /></div>  
-    <div class="col small"><label>Quantas apostas perderam?</label><input id="qtdPerdidas" type="number" step="1" min="0" max="2" value="0"/><div class="small-note">0, 1 ou 2</div></div>  
   </div>  
 
   <!-- APOSTA ÚNICA -->  
@@ -73,7 +73,7 @@
     </div>  
   </div>  
 
-  <!-- MULTIPLICADORES -->  
+  <!-- MULTIPLICADORES + QTD PERDAS -->  
   <div class="row" style="align-items:end; border-top:1px solid #eef2f9; padding-top:10px; margin-top:12px;">  
     <div class="col small">  
       <label for="mult2Perdas">× 2 perdas</label>  
@@ -86,6 +86,11 @@
     <div class="col small">  
       <label for="mult2Vitorias">× 2 acertos</label>  
       <input id="mult2Vitorias" type="number" step="0.01" min="0" value="1.00"/>  
+    </div>  
+    <div class="col small">  
+      <label for="qtdPerdidas">Quantas apostas perderam?</label>  
+      <input id="qtdPerdidas" type="number" step="1" min="0" max="2" value="0"/>  
+      <div class="small-note">0, 1 ou 2</div>  
     </div>  
   </div>  
 
@@ -123,6 +128,7 @@
   </table>  
 </div>  
 
+<!-- SCRIPT ORIGINAL INALTERADO -->
 <script>  
 (function(){  
   const saldoInicialEl=document.getElementById('saldoInicial');  
@@ -238,16 +244,12 @@
     save();
     render();
 
-    // define multiplicador
     let mult = 1;
     if (lost === 2) mult = mults.p2;
     else if (lost === 1) mult = mults.p1;
     else mult = mults.v2;
 
-    // define valor base para próxima aposta
-    let baseValor = r.T; // padrão: última aposta
-
-    // condição especial: última vitória e penúltima derrota
+    let baseValor = r.T;
     if (history.length >= 2) {
         const ultima = history[history.length - 1];
         const penultima = history[history.length - 2];
@@ -257,16 +259,11 @@
                 .slice(0, history.length - 1)
                 .reverse()
                 .find(h => h.resultado > 0);
-            if (ultimaVencedora) {
-                baseValor = ultimaVencedora.valor;
-            } else {
-                baseValor = history[0].valor;
-            }
+            baseValor = ultimaVencedora ? ultimaVencedora.valor : history[0].valor;
         }
     }
 
     valorTotalEl.value = (baseValor * mult).toFixed(2);
-
     oddAEl.value = '';
     oddBEl.value = '';
   };
