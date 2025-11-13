@@ -1,4 +1,4 @@
-              <!doctype html>
+<!doctype html>
 <html lang="pt-BR">  
 <head>  
 <meta charset="utf-8" />  
@@ -93,7 +93,6 @@
   <div class="row">  
     <button id="btnCalcular" class="btn">Calcular distribuição</button>  
     <button id="btnConcluir" class="btn secondary">Aposta concluída</button>  
-    <button id="btnApagarUlt" class="btn secondary">Apagar última</button>  
     <button id="btnResetHist" class="btn danger">Resetar histórico</button>  
   </div>  
 
@@ -274,9 +273,6 @@
 
   document.getElementById('btnResetHist').onclick=()=>{  
     if(confirm('Apagar todo histórico?')){history=[];save();render();}  
-  };  
-  document.getElementById('btnApagarUlt').onclick=()=>{  
-    if(history.length){history.pop();save();render();}  
   };  
   
   load();  
