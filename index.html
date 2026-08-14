@@ -18,7 +18,9 @@
   .btn{background:#0b66a3;color:#fff;padding:10px 14px;border-radius:8px;border:0;cursor:pointer;font-weight:600}  
   .btn.secondary{background:#28a745;color:#fff}
   .btn.secondary:hover{background:#218838}  
-  .btn.danger{background:#e24b4b}  
+  .btn.danger{background:#e24b4b}
+  .btn.resetAposta{background:#f39c12;color:#fff}
+  .btn.resetAposta:hover{background:#d68910}
   .output{background:#f3f6fb;padding:12px;border-radius:8px;border:1px solid #e8edf6}  
   .summary{display:flex;gap:12px;flex-wrap:wrap;margin-top:8px}  
   .card{flex:1;min-width:220px;padding:12px;border-radius:8px;background:#fff;border:1px solid #eef3fa}  
@@ -97,7 +99,8 @@
 
   </div>    <!-- BOTÕES -->    <div class="row">  
     <button id="btnCalcular" class="btn">Calcular distribuição</button>  
-    <button id="btnConcluir" class="btn secondary">Aposta concluída</button>  
+    <button id="btnConcluir" class="btn secondary">Aposta concluída</button>
+    <button id="btnResetAposta" class="btn resetAposta">Resetar aposta</button>
     <button id="btnResetHist" class="btn danger">Resetar histórico</button>  
   </div>    <!-- RESULTADOS -->    <div class="output">  
     <div class="summary">  
@@ -148,11 +151,23 @@
   const mult2Vitorias=document.getElementById('mult2Vitorias');  
   const modoUnicoEl=document.getElementById('modoUnico');  
   
+  const btnResetAposta=document.getElementById('btnResetAposta');
+
   const KEY_SALDO='mx_saldo';  
   const KEY_HIST='mx_hist';  
-  const KEY_MULT='mx_mults';  
+  const KEY_MULT='mx_mults';
+
+  /*
+   * NOVO:
+   * Guarda os estados anteriores de cada aposta concluída.
+   * Isso permite desfazer uma ou várias apostas, uma por vez.
+   */
+  const KEY_UNDO='mx_undo_apostas';
   
-  let saldoInicial=0, history=[], mults={p2:1,p1:1,v2:1};  
+  let saldoInicial=0;
+  let history=[];
+  let mults={p2:1,p1:1,v2:1};
+  let undoStates=[];
   
   const fmt=v=>Number(v).toLocaleString('pt-BR',{
     minimumFractionDigits:2,
@@ -164,22 +179,32 @@
   function save(){  
     localStorage.setItem(KEY_SALDO,saldoInicial);  
     localStorage.setItem(KEY_HIST,JSON.stringify(history));  
-    localStorage.setItem(KEY_MULT,JSON.stringify(mults));  
+    localStorage.setItem(KEY_MULT,JSON.stringify(mults));
+    localStorage.setItem(KEY_UNDO,JSON.stringify(undoStates));
   }  
   
   function load(){  
     saldoInicial=parseFloat(localStorage.getItem(KEY_SALDO))||0;  
-    history=JSON.parse(localStorage.getItem(KEY_HIST)||'[]');  
-    mults=JSON.parse(
-      localStorage.getItem(KEY_MULT)||'{"p2":1,"p1":1,"v2":1}'
+
+    history=JSON.parse(
+      localStorage.getItem(KEY_HIST)||'[]'
     );  
 
+    mults=JSON.parse(
+      localStorage.getItem(KEY_MULT)||'{"p2":1,"p1":1,"v2":1}'
+    );
+
+    undoStates=JSON.parse(
+      localStorage.getItem(KEY_UNDO)||'[]'
+    );
+  
     saldoInicialEl.value=saldoInicial;  
     mult2Perdas.value=mults.p2;  
     mult1Perda.value=mults.p1;  
     mult2Vitorias.value=mults.v2;  
 
     atualizarLimitePerdas();
+    atualizarBotaoResetAposta();
     render();  
   }  
   
@@ -205,6 +230,20 @@
       histTbody.appendChild(tr);  
     });  
   }  
+
+  function atualizarBotaoResetAposta(){
+
+    btnResetAposta.disabled=(undoStates.length===0);
+
+    if(undoStates.length===0){
+      btnResetAposta.style.opacity='0.5';
+      btnResetAposta.style.cursor='not-allowed';
+    }else{
+      btnResetAposta.style.opacity='1';
+      btnResetAposta.style.cursor='pointer';
+    }
+
+  }
   
   saldoInicialEl.addEventListener('change',()=>{
     saldoInicial=parseFloat(saldoInicialEl.value)||0;
@@ -233,10 +272,6 @@
       qtdPerdidasEl.max=1;
       qtdPerdidasNota.textContent='0 ou 1';
 
-      /*
-       * Se anteriormente estava selecionado 2,
-       * corrige automaticamente para 1.
-       */
       if(parseInt(qtdPerdidasEl.value)>1){
         qtdPerdidasEl.value=1;
       }
@@ -352,11 +387,8 @@
     let lost=parseInt(qtdPerdidasEl.value)||0;
 
     /*
-     * CORREÇÃO PRINCIPAL
-     *
      * APOSTA ÚNICA:
-     * 0 perdas = aposta vencedora
-     * 1 perda  = prejuízo total
+     * Só pode haver 0 ou 1 perda.
      */
     if(r.unico){
 
@@ -369,6 +401,27 @@
       }
 
     }
+
+    /*
+     * =========================================================
+     * SALVA O ESTADO ANTERIOR ANTES DE CONCLUIR A APOSTA
+     * =========================================================
+     *
+     * Tudo que estiver nos campos neste momento será restaurado
+     * caso o usuário clique em "Resetar aposta".
+     */
+
+    undoStates.push({
+      history:JSON.parse(JSON.stringify(history)),
+      valorTotal:valorTotalEl.value,
+      oddA:oddAEl.value,
+      oddB:oddBEl.value,
+      qtdPerdidas:qtdPerdidasEl.value,
+      modoUnico:modoUnicoEl.checked,
+      distInfo:distInfo.innerHTML,
+      oneWin:oneWin.innerHTML,
+      bothWin:bothWin.innerHTML
+    });
 
     let result=0;
 
@@ -390,10 +443,6 @@
 
       /*
        * MODO NORMAL — duas apostas
-       *
-       * 2 perdas = prejuízo total
-       * 1 perda  = uma vencedora e uma perdedora
-       * 0 perdas = duas vencedoras
        */
       if(lost===2) result=-r.T;
       if(lost===1) result=r.profit1;
@@ -410,14 +459,11 @@
       percent:+perc.toFixed(2)
     });
 
-    save();
-    render();
-
+    /*
+     * Mantém a lógica original dos multiplicadores.
+     */
     let mult=1;
 
-    /*
-     * A lógica dos multiplicadores permanece igual.
-     */
     if(lost===2) mult=mults.p2;
     else if(lost===1) mult=mults.p1;
     else mult=mults.v2;
@@ -449,15 +495,103 @@
     oddAEl.value='';
     oddBEl.value='';
 
+    /*
+     * Limpa os resultados visuais depois da conclusão,
+     * mantendo o comportamento original.
+     */
+    render();
+
+    save();
+    atualizarBotaoResetAposta();
+
   };  
 
+  /*
+   * =========================================================
+   * NOVO BOTÃO — RESETAR APOSTA
+   * =========================================================
+   *
+   * Desfaz SOMENTE a última aposta concluída.
+   *
+   * Como o estado anterior foi salvo antes da conclusão,
+   * podemos restaurar exatamente como estava.
+   */
+  btnResetAposta.onclick=()=>{
+
+    if(undoStates.length===0){
+
+      alert('Não existe nenhuma aposta concluída para resetar.');
+      return;
+
+    }
+
+    if(!confirm('Resetar a última aposta e voltar ao estado anterior à conclusão?')){
+      return;
+    }
+
+    /*
+     * Recupera o último estado salvo.
+     */
+    const estadoAnterior=undoStates.pop();
+
+    /*
+     * Restaura o histórico exatamente como estava.
+     */
+    history=JSON.parse(
+      JSON.stringify(estadoAnterior.history)
+    );
+
+    /*
+     * Restaura os campos da aposta.
+     */
+    valorTotalEl.value=estadoAnterior.valorTotal;
+    oddAEl.value=estadoAnterior.oddA;
+    oddBEl.value=estadoAnterior.oddB;
+    qtdPerdidasEl.value=estadoAnterior.qtdPerdidas;
+    modoUnicoEl.checked=estadoAnterior.modoUnico;
+
+    /*
+     * Restaura os resultados da tela.
+     */
+    distInfo.innerHTML=estadoAnterior.distInfo;
+    oneWin.innerHTML=estadoAnterior.oneWin;
+    bothWin.innerHTML=estadoAnterior.bothWin;
+
+    /*
+     * Atualiza o limite de perdas conforme o modo restaurado.
+     */
+    atualizarLimitePerdas();
+
+    /*
+     * Recalcula saldo e histórico.
+     */
+    render();
+
+    /*
+     * Salva o novo estado.
+     */
+    save();
+
+    atualizarBotaoResetAposta();
+
+  };
+
+  /*
+   * RESETAR HISTÓRICO
+   *
+   * Além de apagar o histórico, também apaga os estados
+   * armazenados para o botão "Resetar aposta".
+   */
   document.getElementById('btnResetHist').onclick=()=>{  
 
     if(confirm('Apagar todo histórico?')){
 
       history=[];
+      undoStates=[];
+
       save();
       render();
+      atualizarBotaoResetAposta();
 
     }
 
