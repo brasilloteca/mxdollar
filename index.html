@@ -593,6 +593,20 @@
 
   });
 
+  [oddAEl, oddBEl].forEach(el => {
+
+  el.addEventListener('change', () => {
+
+    const valor = parseFloat(el.value);
+
+    if (!isNaN(valor)) {
+      el.value = valor.toFixed(2);
+    }
+
+  });
+
+});
+
   function atualizarLimitePerdas(){
 
     if(modoUnicoEl.checked){
