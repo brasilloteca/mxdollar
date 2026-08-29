@@ -1,0 +1,1441 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>MX$ — Calculadora</title>
+
+<link rel="icon" href="1762965844618.jpg" type="image/jpeg">
+<link rel="apple-touch-icon" href="1762965844618.jpg">
+
+<style>
+  :root{font-family:Inter,Segoe UI,Helvetica,Arial,sans-serif}
+
+  body{
+    background:#f6f7fb;
+    color:#111;
+    margin:0;
+    padding:24px;
+    display:flex;
+    justify-content:center
+  }
+
+  .container{
+    width:980px;
+    max-width:96%;
+    background:#fff;
+    border-radius:12px;
+    box-shadow:0 6px 30px rgba(20,25,40,0.08);
+    padding:22px
+  }
+
+  h1{
+    font-size:40px;
+    margin:0 0 14px;
+    color:#0b3b66
+  }
+
+  .row{
+    display:flex;
+    gap:12px;
+    flex-wrap:wrap;
+    margin-bottom:12px
+  }
+
+  label{
+    font-size:13px;
+    color:#334;
+    display:block;
+    margin-bottom:6px
+  }
+
+  input[type="text"],
+  input[type="number"]{
+    padding:10px 12px;
+    border:1px solid #d7dde8;
+    border-radius:8px;
+    font-size:14px;
+    width:100%;
+    box-sizing:border-box
+  }
+
+  .col{
+    flex:1;
+    min-width:140px
+  }
+
+  .small{
+    width:140px
+  }
+
+  .btn{
+    background:#0b66a3;
+    color:#fff;
+    padding:10px 14px;
+    border-radius:8px;
+    border:0;
+    cursor:pointer;
+    font-weight:600
+  }
+
+  .btn.secondary{
+    background:#28a745;
+    color:#fff
+  }
+
+  .btn.secondary:hover{
+    background:#218838
+  }
+
+  .btn.danger{
+    background:#e24b4b
+  }
+
+  .btn.resetAposta{
+    background:#f39c12;
+    color:#fff
+  }
+
+  .btn.resetAposta:hover{
+    background:#d68910
+  }
+
+  .btn.depositar{
+    background:#0b66a3;
+    color:#fff
+  }
+
+  .btn.depositar:hover{
+    background:#095889
+  }
+
+  .btn.retirar{
+    background:#dc3545;
+    color:#fff
+  }
+
+  .btn.retirar:hover{
+    background:#bb2d3b
+  }
+
+  .movimento-btn{
+    width:100%;
+    margin-top:6px
+  }
+
+  .output{
+    background:#f3f6fb;
+    padding:12px;
+    border-radius:8px;
+    border:1px solid #e8edf6
+  }
+
+  .summary{
+    display:flex;
+    gap:12px;
+    flex-wrap:wrap;
+    margin-top:8px
+  }
+
+  .card{
+    flex:1;
+    min-width:220px;
+    padding:12px;
+    border-radius:8px;
+    background:#fff;
+    border:1px solid #eef3fa
+  }
+
+  table{
+    width:100%;
+    border-collapse:collapse;
+    margin-top:10px
+  }
+
+  th,td{
+    padding:8px;
+    border-bottom:1px solid #f0f3f8;
+    text-align:left;
+    font-size:13px
+  }
+
+  th{
+    background:#fbfdff;
+    font-weight:700
+  }
+
+  .profit{
+    background:#eaffef
+  }
+
+  .loss{
+    background:#fff0f0
+  }
+
+  .deposito{
+    background:#eaffef
+  }
+
+  .retirada{
+    background:#fff0f0
+  }
+
+  .small-note{
+    font-size:12px;
+    color:#6b7a8a;
+    margin-top:4px
+  }
+
+  .resultado-lucro{
+    color:#198754;
+    font-weight:700
+  }
+
+  .resultado-prejuizo{
+    color:#dc3545;
+    font-weight:700
+  }
+
+  .retorno-total{
+    font-weight:700;
+    margin-bottom:4px
+  }
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+  <h1>MX$</h1>
+
+  <!-- SALDO -->
+  <div class="row" style="align-items:end">
+
+    <div class="col small">
+      <label for="saldoInicial">Saldo inicial (R$)</label>
+      <input id="saldoInicial" type="number" step="0.01" min="0" />
+    </div>
+
+    <div class="col small">
+      <label for="saldoAtual">Saldo atual (R$)</label>
+      <input id="saldoAtual" type="text" readonly />
+    </div>
+
+    <div class="col" style="flex:2">
+      <label>Histórico acumulado (R$)</label>
+      <input id="histAcumulado" type="text" readonly />
+    </div>
+
+    <div class="col small">
+      <label for="histPercentual">% do saldo inicial</label>
+      <input id="histPercentual" type="text" readonly />
+    </div>
+
+  </div>
+
+  <!-- DEPÓSITO / RETIRADA -->
+  <div class="row">
+
+    <div class="col">
+      <label for="deposito">Depósito</label>
+      <input
+        id="deposito"
+        type="number"
+        step="0.01"
+        min="0"
+        placeholder="Valor de depósito"
+      />
+      <button id="btnDepositar" class="btn depositar movimento-btn">
+        Depositar
+      </button>
+    </div>
+
+    <div class="col">
+      <label for="retirada">Retirada</label>
+      <input
+        id="retirada"
+        type="number"
+        step="0.01"
+        min="0"
+        placeholder="Valor de retirada"
+      />
+      <button id="btnRetirar" class="btn retirar movimento-btn">
+        Retirar
+      </button>
+    </div>
+
+  </div>
+
+  <!-- ODDS -->
+  <div class="row">
+
+    <div class="col small">
+      <label>Odd 1</label>
+      <input id="oddA" type="number" step="0.01" min="1"/>
+    </div>
+
+    <div class="col small">
+      <label>Odd 2</label>
+      <input id="oddB" type="number" step="0.01" min="1"/>
+    </div>
+
+    <div class="col small">
+      <label>Valor total a apostar (R$)</label>
+      <input id="valorTotal" type="number" step="0.01" min="0" />
+    </div>
+
+  </div>
+
+  <!-- APOSTA ÚNICA -->
+  <div class="row" style="align-items:center; border-top:1px solid #eef2f9; padding-top:10px; margin-top:12px;">
+
+    <div class="col small">
+      <label>
+        <input type="checkbox" id="modoUnico" />
+        Usar aposta única (valor total em odd 1)
+      </label>
+    </div>
+
+  </div>
+
+  <!-- MULTIPLICADORES + QTD PERDAS -->
+  <div class="row" style="align-items:end; border-top:1px solid #eef2f9; padding-top:10px; margin-top:12px;">
+
+    <div class="col small">
+      <label for="mult2Perdas">× 2 perdas</label>
+      <input id="mult2Perdas" type="number" step="0.01" min="0" value="1.00"/>
+    </div>
+
+    <div class="col small">
+      <label for="mult1Perda">× 1 perda</label>
+      <input id="mult1Perda" type="number" step="0.01" min="0" value="1.00"/>
+    </div>
+
+    <div class="col small">
+      <label for="mult2Vitorias">× 2 acertos</label>
+      <input id="mult2Vitorias" type="number" step="0.01" min="0" value="1.00"/>
+    </div>
+
+    <div class="col small">
+      <label for="qtdPerdidas">Quantas apostas perderam?</label>
+      <input id="qtdPerdidas" type="number" step="1" min="0" max="2" value="0"/>
+      <div id="qtdPerdidasNota" class="small-note">0, 1 ou 2</div>
+    </div>
+
+  </div>
+
+  <!-- BOTÕES -->
+  <div class="row">
+
+    <button id="btnCalcular" class="btn">
+      Calcular distribuição
+    </button>
+
+    <button id="btnConcluir" class="btn secondary">
+      Aposta concluída
+    </button>
+
+    <button id="btnResetAposta" class="btn resetAposta">
+      Resetar aposta
+    </button>
+
+    <button id="btnResetHist" class="btn danger">
+      Resetar histórico
+    </button>
+
+  </div>
+
+  <!-- RESULTADOS -->
+  <div class="output">
+
+    <div class="summary">
+
+      <div class="card">
+        <strong>Distribuição</strong>
+        <div id="distInfo" class="small-note">
+          Nenhum cálculo ainda.
+        </div>
+      </div>
+
+      <div class="card">
+        <strong>Se 1 acerta</strong>
+        <div id="oneWin" class="small-note">—</div>
+      </div>
+
+      <div class="card">
+        <strong>Se 2 acertam</strong>
+        <div id="bothWin" class="small-note">—</div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- HISTÓRICO -->
+  <h3>Histórico</h3>
+
+  <div class="small-note">
+    # | data | valor | resultado | %
+  </div>
+
+  <table id="histTable">
+
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Data</th>
+        <th>Valor</th>
+        <th>Resultado</th>
+        <th>%</th>
+      </tr>
+    </thead>
+
+    <tbody></tbody>
+
+  </table>
+
+</div>
+
+<script>
+
+(function(){
+
+  const saldoInicialEl=document.getElementById('saldoInicial');
+  const saldoAtualEl=document.getElementById('saldoAtual');
+  const histAcumuladoEl=document.getElementById('histAcumulado');
+  const histPercentualEl=document.getElementById('histPercentual');
+
+  const depositoEl=document.getElementById('deposito');
+  const retiradaEl=document.getElementById('retirada');
+
+  const btnDepositar=document.getElementById('btnDepositar');
+  const btnRetirar=document.getElementById('btnRetirar');
+
+  const oddAEl=document.getElementById('oddA');
+  const oddBEl=document.getElementById('oddB');
+  const valorTotalEl=document.getElementById('valorTotal');
+
+  const qtdPerdidasEl=document.getElementById('qtdPerdidas');
+  const qtdPerdidasNota=document.getElementById('qtdPerdidasNota');
+
+  const distInfo=document.getElementById('distInfo');
+  const oneWin=document.getElementById('oneWin');
+  const bothWin=document.getElementById('bothWin');
+
+  const histTbody=document.querySelector('#histTable tbody');
+
+  const mult2Perdas=document.getElementById('mult2Perdas');
+  const mult1Perda=document.getElementById('mult1Perda');
+  const mult2Vitorias=document.getElementById('mult2Vitorias');
+
+  const modoUnicoEl=document.getElementById('modoUnico');
+
+  const btnResetAposta=document.getElementById('btnResetAposta');
+
+  const KEY_SALDO='mx_saldo';
+  const KEY_HIST='mx_hist';
+  const KEY_MULT='mx_mults';
+  const KEY_APOSTA='mx_aposta_atual';
+  const KEY_UNDO='mx_undo_apostas';
+
+  let saldoInicial=0;
+  let history=[];
+  let mults={p2:1,p1:1,v2:1};
+  let undoStates=[];
+
+  const fmt=v=>Number(v).toLocaleString('pt-BR',{
+    minimumFractionDigits:2,
+    maximumFractionDigits:2
+  });
+
+  const now=()=>new Date().toLocaleString('pt-BR');
+
+  function save(){
+
+    localStorage.setItem(KEY_SALDO,saldoInicial);
+
+    localStorage.setItem(
+      KEY_HIST,
+      JSON.stringify(history)
+    );
+
+    localStorage.setItem(
+      KEY_MULT,
+      JSON.stringify(mults)
+    );
+
+    localStorage.setItem(
+      KEY_UNDO,
+      JSON.stringify(undoStates)
+    );
+
+    localStorage.setItem(
+      KEY_APOSTA,
+      JSON.stringify({
+        valorTotal:valorTotalEl.value,
+        oddA:oddAEl.value,
+        oddB:oddBEl.value
+      })
+    );
+
+  }
+
+  function load(){
+
+    saldoInicial=parseFloat(
+      localStorage.getItem(KEY_SALDO)
+    )||0;
+
+    history=JSON.parse(
+      localStorage.getItem(KEY_HIST)||'[]'
+    );
+
+    mults=JSON.parse(
+      localStorage.getItem(KEY_MULT)||'{"p2":1,"p1":1,"v2":1}'
+    );
+
+    undoStates=JSON.parse(
+      localStorage.getItem(KEY_UNDO)||'[]'
+    );
+
+    const apostaSalva=JSON.parse(
+      localStorage.getItem(KEY_APOSTA)||'null'
+    );
+
+    saldoInicialEl.value=
+      saldoInicial.toFixed(2);
+
+    mult2Perdas.value=mults.p2;
+    mult1Perda.value=mults.p1;
+    mult2Vitorias.value=mults.v2;
+
+    if(apostaSalva){
+
+      valorTotalEl.value=
+        apostaSalva.valorTotal||'';
+
+      oddAEl.value=
+        apostaSalva.oddA||'';
+
+      oddBEl.value=
+        apostaSalva.oddB||'';
+
+    }
+
+    atualizarLimitePerdas();
+    atualizarBotaoResetAposta();
+    render();
+
+  }
+
+  /*
+   * Calcula o total de resultados do histórico.
+   *
+   * A estrutura antiga continua compatível:
+   * resultado positivo = lucro
+   * resultado negativo = prejuízo
+   *
+   * Depósito:
+   * tipo = "deposito"
+   * resultado = valor positivo
+   *
+   * Retirada:
+   * tipo = "retirada"
+   * resultado = valor negativo
+   */
+
+  function render(){
+
+    const totalHist=history.reduce(
+      (s,i)=>s+Number(i.resultado||0),
+      0
+    );
+
+    histAcumuladoEl.value=
+      'R$ '+fmt(totalHist);
+
+    saldoAtualEl.value=
+      'R$ '+fmt(saldoInicial+totalHist);
+
+    let percentualHistorico=0;
+
+    if(saldoInicial!==0){
+
+      percentualHistorico=
+        (totalHist/saldoInicial)*100;
+
+    }
+
+    histPercentualEl.value=
+      (percentualHistorico>=0?'+':'-')+
+      fmt(Math.abs(percentualHistorico))+
+      '%';
+
+    histTbody.innerHTML='';
+
+    history.forEach((it,i)=>{
+
+      const tr=document.createElement('tr');
+
+      /*
+       * Depósito sempre verde.
+       * Retirada sempre vermelha.
+       * Apostas seguem a lógica anterior.
+       */
+
+      if(it.tipo==='deposito'){
+
+        tr.className='deposito';
+
+      }else if(it.tipo==='retirada'){
+
+        tr.className='retirada';
+
+      }else{
+
+        tr.className=
+          Number(it.resultado)>=0
+            ?'profit'
+            :'loss';
+
+      }
+
+      let valorTexto=
+        'R$ '+fmt(Math.abs(Number(it.valor||0)));
+
+      let resultadoTexto='';
+
+      if(it.tipo==='deposito'){
+
+        resultadoTexto=
+          '+R$ '+fmt(Math.abs(Number(it.resultado||0)));
+
+      }else if(it.tipo==='retirada'){
+
+        resultadoTexto=
+          '-R$ '+fmt(Math.abs(Number(it.resultado||0)));
+
+      }else{
+
+        resultadoTexto=
+          (Number(it.resultado)>=0?'+':'-')+
+          'R$ '+
+          fmt(Math.abs(Number(it.resultado||0)));
+
+      }
+
+      let percentTexto=
+        (Number(it.percent)>=0?'+':'-')+
+        Math.abs(Number(it.percent||0)).toFixed(2)+
+        '%';
+
+      tr.innerHTML=`
+        <td>${i+1}</td>
+        <td>${it.data}</td>
+        <td>${valorTexto}</td>
+        <td>${resultadoTexto}</td>
+        <td>${percentTexto}</td>
+      `;
+
+      histTbody.appendChild(tr);
+
+    });
+
+  }
+
+  function atualizarBotaoResetAposta(){
+
+    btnResetAposta.disabled=
+      (undoStates.length===0);
+
+    if(undoStates.length===0){
+
+      btnResetAposta.style.opacity='0.5';
+      btnResetAposta.style.cursor='not-allowed';
+
+    }else{
+
+      btnResetAposta.style.opacity='1';
+      btnResetAposta.style.cursor='pointer';
+
+    }
+
+  }
+
+  /*
+   * Saldo inicial sempre com duas casas.
+   */
+
+  saldoInicialEl.addEventListener('change',()=>{
+
+    saldoInicial=
+      parseFloat(saldoInicialEl.value)||0;
+
+    saldoInicialEl.value=
+      saldoInicial.toFixed(2);
+
+    save();
+    render();
+
+  });
+
+  /*
+   * DEPÓSITO
+   *
+   * O depósito entra diretamente no histórico.
+   * Ele NÃO altera o saldoInicial.
+   *
+   * Isso é importante porque o saldo inicial
+   * continua sendo a referência para o percentual.
+   */
+
+  btnDepositar.onclick=()=>{
+
+    const valor=
+      parseFloat(depositoEl.value);
+
+    if(!(valor>0)){
+
+      alert(
+        'Informe um valor de depósito maior que zero.'
+      );
+
+      return;
+
+    }
+
+    history.push({
+
+      data:now(),
+
+      valor:+valor.toFixed(2),
+
+      resultado:+valor.toFixed(2),
+
+      percent:
+        saldoInicial!==0
+          ?+(valor/saldoInicial*100).toFixed(2)
+          :0,
+
+      tipo:'deposito'
+
+    });
+
+    depositoEl.value='';
+
+    render();
+    save();
+
+  };
+
+  /*
+   * RETIRADA
+   */
+
+  btnRetirar.onclick=()=>{
+
+    const valor=
+      parseFloat(retiradaEl.value);
+
+    if(!(valor>0)){
+
+      alert(
+        'Informe um valor de retirada maior que zero.'
+      );
+
+      return;
+
+    }
+
+    const saldoAtual=
+      saldoInicial+
+      history.reduce(
+        (s,i)=>s+Number(i.resultado||0),
+        0
+      );
+
+    if(valor>saldoAtual){
+
+      alert(
+        'O valor da retirada não pode ser maior que o saldo atual.'
+      );
+
+      return;
+
+    }
+
+    history.push({
+
+      data:now(),
+
+      valor:+valor.toFixed(2),
+
+      resultado:+(-valor).toFixed(2),
+
+      percent:
+        saldoInicial!==0
+          ?+(-valor/saldoInicial*100).toFixed(2)
+          :0,
+
+      tipo:'retirada'
+
+    });
+
+    retiradaEl.value='';
+
+    render();
+    save();
+
+  };
+
+  [mult2Perdas,mult1Perda,mult2Vitorias].forEach(el=>{
+
+    el.addEventListener('change',()=>{
+
+      mults.p2=
+        parseFloat(mult2Perdas.value)||1;
+
+      mults.p1=
+        parseFloat(mult1Perda.value)||1;
+
+      mults.v2=
+        parseFloat(mult2Vitorias.value)||1;
+
+      save();
+
+    });
+
+  });
+
+  /*
+   * Armazena automaticamente:
+   * Odd 1
+   * Odd 2
+   * Valor total
+   */
+
+  [oddAEl,oddBEl,valorTotalEl].forEach(el=>{
+
+    el.addEventListener('input',()=>{
+
+      localStorage.setItem(
+        KEY_APOSTA,
+        JSON.stringify({
+          valorTotal:valorTotalEl.value,
+          oddA:oddAEl.value,
+          oddB:oddBEl.value
+        })
+      );
+
+    });
+
+  });
+
+  [oddAEl,oddBEl].forEach(el=>{
+
+    el.addEventListener('change',()=>{
+
+      const valor=
+        parseFloat(el.value);
+
+      if(!isNaN(valor)){
+
+        el.value=
+          valor.toFixed(2);
+
+      }
+
+    });
+
+  });
+
+  function atualizarLimitePerdas(){
+
+    if(modoUnicoEl.checked){
+
+      qtdPerdidasEl.max=1;
+
+      qtdPerdidasNota.textContent=
+        '0 ou 1';
+
+      if(
+        parseInt(qtdPerdidasEl.value)>1
+      ){
+
+        qtdPerdidasEl.value=1;
+
+      }
+
+    }else{
+
+      qtdPerdidasEl.max=2;
+
+      qtdPerdidasNota.textContent=
+        '0, 1 ou 2';
+
+    }
+
+  }
+
+  modoUnicoEl.addEventListener(
+    'change',
+    ()=>{
+      atualizarLimitePerdas();
+    }
+  );
+
+  function calcular(){
+
+    const o1=
+      parseFloat(oddAEl.value);
+
+    const o2=
+      parseFloat(oddBEl.value);
+
+    const T=
+      parseFloat(valorTotalEl.value);
+
+    const unico=
+      modoUnicoEl.checked;
+
+    if(unico){
+
+      if(!(o1>0&&T>0)){
+
+        alert(
+          'Preencha pelo menos a Odd 1 e o valor total.'
+        );
+
+        return null;
+
+      }
+
+      const A1=T;
+      const A2=0;
+      const R=A1*o1;
+      const profit1=R-A1;
+
+      return{
+
+        o1,
+        o2:0,
+        T,
+        A1,
+        A2,
+        R,
+        profit1,
+        profitBoth:profit1,
+        unico:true
+
+      };
+
+    }
+
+    if(!(o1>0&&o2>0&&T>0)){
+
+      alert(
+        'Preencha ambas as odds e o valor total.'
+      );
+
+      return null;
+
+    }
+
+    const inv1=1/o1;
+    const inv2=1/o2;
+
+    const sumInv=
+      inv1+inv2;
+
+    const A1=
+      (T/o1)/sumInv;
+
+    const A2=
+      (T/o2)/sumInv;
+
+    const R=
+      T/sumInv;
+
+    const ret1=R;
+
+    const profit1=
+      ret1-T;
+
+    const retBoth=
+      A1*o1+
+      A2*o2;
+
+    const profitBoth=
+      retBoth-T;
+
+    return{
+
+      o1,
+      o2,
+      T,
+      A1,
+      A2,
+      R,
+      profit1,
+      profitBoth,
+      unico:false
+
+    };
+
+  }
+
+  document.getElementById(
+    'btnCalcular'
+  ).onclick=()=>{
+
+    const r=calcular();
+
+    if(!r)return;
+
+    if(r.unico){
+
+      distInfo.innerHTML=
+        `Stake único: R$ ${fmt(r.A1)} (odd ${r.o1})`;
+
+    }else{
+
+      distInfo.innerHTML=
+        `Stake 1: R$ ${fmt(r.A1)} (odd ${r.o1})<br>
+         Stake 2: R$ ${fmt(r.A2)} (odd ${r.o2})`;
+
+    }
+
+    const classeResultado1=
+      r.profit1>=0
+        ?'resultado-lucro'
+        :'resultado-prejuizo';
+
+    const textoResultado1=
+      r.profit1>=0
+        ?`Lucro: +R$ ${fmt(Math.abs(r.profit1))}`
+        :`Prejuízo: -R$ ${fmt(Math.abs(r.profit1))}`;
+
+    const retornoTotal1=
+      r.T+r.profit1;
+
+    oneWin.innerHTML=`
+
+      <div class="retorno-total">
+        Retorno total: R$ ${fmt(retornoTotal1)}
+      </div>
+
+      <div class="${classeResultado1}">
+        ${textoResultado1}
+      </div>
+
+    `;
+
+    const classeResultado2=
+      r.profitBoth>=0
+        ?'resultado-lucro'
+        :'resultado-prejuizo';
+
+    const textoResultado2=
+      r.profitBoth>=0
+        ?`Lucro: +R$ ${fmt(Math.abs(r.profitBoth))}`
+        :`Prejuízo: -R$ ${fmt(Math.abs(r.profitBoth))}`;
+
+    const retornoTotal2=
+      r.T+r.profitBoth;
+
+    bothWin.innerHTML=`
+
+      <div class="retorno-total">
+        Retorno total: R$ ${fmt(retornoTotal2)}
+      </div>
+
+      <div class="${classeResultado2}">
+        ${textoResultado2}
+      </div>
+
+    `;
+
+  };
+
+  /*
+   * CONCLUIR APOSTA
+   *
+   * IMPORTANTE:
+   * O estado salvo para o Resetar aposta agora
+   * guarda somente a identificação da aposta
+   * que será desfeita.
+   *
+   * Depósitos e retiradas feitos posteriormente
+   * não serão apagados.
+   */
+
+  document.getElementById(
+    'btnConcluir'
+  ).onclick=()=>{
+
+    const r=calcular();
+
+    if(!r)return;
+
+    let lost=
+      parseInt(qtdPerdidasEl.value)||0;
+
+    if(r.unico){
+
+      if(lost>1){
+
+        alert(
+          'No modo Aposta única, só pode haver 0 ou 1 aposta perdida.'
+        );
+
+        qtdPerdidasEl.value=1;
+
+        return;
+
+      }
+
+    }
+
+    /*
+     * Cada aposta recebe um identificador único.
+     */
+
+    const apostaId=
+      'aposta_'+
+      Date.now()+
+      '_'+
+      Math.random()
+        .toString(36)
+        .substring(2,9);
+
+    let result=0;
+
+    if(r.unico){
+
+      if(lost===1){
+
+        result=-r.T;
+
+      }else{
+
+        result=r.profit1;
+
+      }
+
+    }else{
+
+      if(lost===2)
+        result=-r.T;
+
+      if(lost===1)
+        result=r.profit1;
+
+      if(lost===0)
+        result=r.profitBoth;
+
+    }
+
+    const perc=
+      (result/r.T)*100;
+
+    /*
+     * Guarda a aposta no histórico.
+     */
+
+    history.push({
+
+      id:apostaId,
+
+      tipo:'aposta',
+
+      data:now(),
+
+      valor:+r.T.toFixed(2),
+
+      resultado:+result.toFixed(2),
+
+      percent:+perc.toFixed(2)
+
+    });
+
+    /*
+     * O Resetar aposta guarda apenas:
+     *
+     * - ID da aposta criada
+     * - estado dos campos da aposta
+     * - conteúdo visual dos resultados
+     *
+     * NÃO guarda uma cópia inteira do histórico.
+     */
+
+    undoStates.push({
+
+      apostaId:apostaId,
+
+      valorTotal:
+        valorTotalEl.value,
+
+      oddA:
+        oddAEl.value,
+
+      oddB:
+        oddBEl.value,
+
+      qtdPerdidas:
+        qtdPerdidasEl.value,
+
+      modoUnico:
+        modoUnicoEl.checked,
+
+      distInfo:
+        distInfo.innerHTML,
+
+      oneWin:
+        oneWin.innerHTML,
+
+      bothWin:
+        bothWin.innerHTML
+
+    });
+
+    let mult=1;
+
+    if(lost===2)
+
+      mult=mults.p2;
+
+    else if(lost===1)
+
+      mult=mults.p1;
+
+    else
+
+      mult=mults.v2;
+
+    let baseValor=r.T;
+
+    /*
+     * Procura a última aposta vencedora
+     * ignorando depósitos e retiradas.
+     */
+
+    const apostasAnteriores=
+      history.filter(
+        h=>
+          h.tipo==='aposta' &&
+          h.id!==apostaId
+      );
+
+    if(apostasAnteriores.length>=1){
+
+      const ultima=
+        history[history.length-1];
+
+      /*
+       * Só aplica a lógica original de
+       * vitória após derrota quando os dois
+       * registros envolvidos forem apostas.
+       */
+
+      const penultimaAposta=
+        [...history]
+          .slice(0,-1)
+          .reverse()
+          .find(
+            h=>h.tipo==='aposta'
+          );
+
+      if(
+        ultima.tipo==='aposta' &&
+        ultima.resultado>0 &&
+        penultimaAposta &&
+        penultimaAposta.resultado<0
+      ){
+
+        const ultimaVencedora=
+          [...apostasAnteriores]
+            .reverse()
+            .find(
+              h=>h.resultado>0
+            );
+
+        baseValor=
+          ultimaVencedora
+            ?ultimaVencedora.valor
+            :apostasAnteriores[0].valor;
+
+      }
+
+    }
+
+    /*
+     * Calcula o próximo valor da aposta.
+     */
+
+    valorTotalEl.value=
+      (baseValor*mult).toFixed(2);
+
+    oddAEl.value='';
+    oddBEl.value='';
+
+    render();
+
+    save();
+
+    atualizarBotaoResetAposta();
+
+  };
+
+  /*
+   * RESETAR APOSTA
+   *
+   * CORREÇÃO PRINCIPAL:
+   *
+   * Em vez de restaurar o histórico inteiro,
+   * localiza somente o ID da aposta que deve
+   * ser desfeita e remove somente essa aposta.
+   *
+   * Portanto:
+   *
+   * APOSTA
+   * DEPÓSITO
+   * RETIRADA
+   *
+   * continuam independentes.
+   */
+
+  btnResetAposta.onclick=()=>{
+
+    if(undoStates.length===0){
+
+      alert(
+        'Não existe nenhuma aposta concluída para resetar.'
+      );
+
+      return;
+
+    }
+
+    if(!confirm(
+      'Resetar a última aposta e voltar ao estado anterior à conclusão?'
+    )){
+
+      return;
+
+    }
+
+    const estadoAnterior=
+      undoStates.pop();
+
+    /*
+     * Remove SOMENTE a aposta relacionada
+     * ao estado de undo.
+     */
+
+    if(estadoAnterior.apostaId){
+
+      history=
+        history.filter(
+          h=>
+            h.id!==estadoAnterior.apostaId
+        );
+
+    }else{
+
+      /*
+       * Compatibilidade com estados antigos.
+       *
+       * Se existir um undo antigo sem apostaId,
+       * procuramos a última aposta e removemos
+       * somente ela, preservando depósitos
+       * e retiradas.
+       */
+
+      for(
+        let i=history.length-1;
+        i>=0;
+        i--
+      ){
+
+        if(
+          !history[i].tipo ||
+          history[i].tipo==='aposta'
+        ){
+
+          history.splice(i,1);
+
+          break;
+
+        }
+
+      }
+
+    }
+
+    /*
+     * Restaura os campos da aposta anterior.
+     */
+
+    valorTotalEl.value=
+      estadoAnterior.valorTotal;
+
+    oddAEl.value=
+      estadoAnterior.oddA;
+
+    oddBEl.value=
+      estadoAnterior.oddB;
+
+    qtdPerdidasEl.value=
+      estadoAnterior.qtdPerdidas;
+
+    modoUnicoEl.checked=
+      estadoAnterior.modoUnico;
+
+    distInfo.innerHTML=
+      estadoAnterior.distInfo;
+
+    oneWin.innerHTML=
+      estadoAnterior.oneWin;
+
+    bothWin.innerHTML=
+      estadoAnterior.bothWin;
+
+    atualizarLimitePerdas();
+
+    render();
+
+    save();
+
+    atualizarBotaoResetAposta();
+
+  };
+
+  document.getElementById(
+    'btnResetHist'
+  ).onclick=()=>{
+
+    if(confirm(
+      'Apagar todo histórico?'
+    )){
+
+      history=[];
+      undoStates=[];
+
+      save();
+
+      render();
+
+      atualizarBotaoResetAposta();
+
+    }
+
+  };
+
+  load();
+
+})();
+</script>
+
+</body>
+</html>
